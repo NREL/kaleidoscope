@@ -1,6 +1,6 @@
 # kaleidoscope
 
-`kaleidoscope` is an R package developed to visualize PLEXOS scenarios. 
+`kaleidoscope` is an R package developed to visualize PLEXOS scenarios as packaged by the [`rplexos`](https://github.com/NREL/rplexos) R package. 
 
 ### Eastern Renewable Generation Integration Study (ERGIS) Example
 
