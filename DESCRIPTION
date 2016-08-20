@@ -1,0 +1,31 @@
+Package: kaleidoscope
+Title: R PLEXOS scenario visualization package
+Version: 0.1.0
+Authors@R: c(
+           person("Kenny", "Gruchalla", ,"kenny.gruchalla@nrel.gov", role = c("aut", "cre")),
+           person("National Renewable Energy Laboratory", role = "cph")
+           )
+Description: Routines to visualize PLEXOS scenarios
+Depends:
+    R (>= 3.2.2)
+Imports:
+    data.table, 
+    sp,
+    maptools,
+    NightDay,
+    scales,
+    tidyr,
+    raster,
+    MASS,
+    RColorBrewer,
+    igraph,
+    circlize,
+    dplyr,
+    magrittr,
+    parallel
+License: MIT + file LICENSE
+LazyData: true
+RoxygenNote: 5.0.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
