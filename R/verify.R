@@ -1,3 +1,7 @@
+#-------------------------------------------------------------------------------
+# Copyright © 2016 the Alliance for Sustainable Energy, LLC, All Rights Reserved
+#------------------------------------------------------------------------------- 
+
 # Code to examime PV generation across multiple ISOs with minimal data
 # manipulation
 #

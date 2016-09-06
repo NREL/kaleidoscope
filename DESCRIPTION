@@ -3,7 +3,7 @@ Title: R PLEXOS scenario visualization package
 Version: 0.1.0
 Authors@R: c(
            person("Kenny", "Gruchalla", ,"kenny.gruchalla@nrel.gov", role = c("aut", "cre")),
-           person("National Renewable Energy Laboratory", role = "cph")
+           person("The Alliance for Sustainable Energy", role = "cph")
            )
 Description: Routines to visualize PLEXOS scenarios
 Depends:
