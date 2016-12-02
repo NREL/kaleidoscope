@@ -13,7 +13,7 @@
 load_generation <- function(filename, scenario)
 {
     generation = read.csv(filename, header=T)
-    generation=gather(generation, time, power, -name)
+    generation=tidyr::gather(generation, time, power, -name)
     names(generation)[names(generation)=='name'] = 'Generator_Name'
     generation$time = as.POSIXlt(generation$time, format='X%Y.%m.%d.%H.%M.%S', tz="EST")
     generation$scenario = scenario
@@ -32,7 +32,7 @@ load_generation <- function(filename, scenario)
 #' @export dispatch_color
 dispatch_color <- function(type, colors, a=1)
 {
-    alpha(colors$color[colors$type==type], a)
+    scales::alpha(colors$color[colors$type==type], a)
 }
 
 #----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ stripSmallPolys <- function(poly, minarea=0.0)
 draw_shadow <- function(t)
 {
     # TBD convert t from posix
-    x = NightDay(t, -5)
+    x = NightDay::NightDay(t, -5)
     
     yy <- x$Latitude
     GHA <- x$GHA

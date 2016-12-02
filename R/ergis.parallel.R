@@ -36,6 +36,7 @@ draw_ergis_parallel_series<- function(t0, tn, prefix, scenario='c_RT_R30P', dens
 #'
 #' @param t0 starting timestep 
 #' @param tn ending timestep 
+#' @export draw_insight_parallel_series
 draw_insight_parallel_series<- function(t0, tn, prefix, max_interchange=0)
 {
     ts = unique(ergis_generation$time)
