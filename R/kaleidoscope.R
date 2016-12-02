@@ -9,6 +9,7 @@
 #'              file are in the form: "name", "YYYY-MM-DD hh:mm:ss", ...
 #'
 #' @param filename the generation csv
+#' @export load_generation
 load_generation <- function(filename, scenario)
 {
     generation = read.csv(filename, header=T)
@@ -28,6 +29,7 @@ load_generation <- function(filename, scenario)
 #' @param type the generation type
 #' @param colors data table with correlating generation type with color
 #' @param a opacity value (default=1, opaque). 
+#' @export dispatch_color
 dispatch_color <- function(type, colors, a=1)
 {
     alpha(colors$color[colors$type==type], a)
@@ -37,6 +39,7 @@ dispatch_color <- function(type, colors, a=1)
 #' Strip small polygons from complex SpatialPolygonsData
 #'
 #' @description Simplifies SpatialPolygonsData by removing small polygons
+#' @export stripSmallPolys
 stripSmallPolys <- function(poly, minarea=0.0)
 {
   # Get the areas
@@ -66,6 +69,7 @@ stripSmallPolys <- function(poly, minarea=0.0)
 #' @description Draw day/night shadow
 #'
 #' @param t time (EST) to plot
+#' @export draw_shadow
 draw_shadow <- function(t)
 {
     # TBD convert t from posix
@@ -95,6 +99,7 @@ draw_shadow <- function(t)
 #' @description Draw background map
 #'
 #' @param shape underlying shapefile (defaults to ISO regions)
+#' @export draw_map
 draw_map <- function()
 {
     par(mar=c(0,0,0,0),oma=c(0,0,0,0))
@@ -116,6 +121,7 @@ draw_map <- function()
 #' @param fill fill the generator bubble (default=TRUE)
 #' @param lx x position of legend
 #' @param ly y position of legend
+#' @export draw_generators
 draw_generators <- function(t, types, generators, generation, colors, scenario='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annontation_color='white', legend_color='white')
 {
     p <- generation[generation$time == t & generation$scenario==scenario,]
@@ -164,6 +170,7 @@ draw_generators <- function(t, types, generators, generation, colors, scenario='
 #'          length-2 integer vector.
 #' @param lims The limits of the rectangle covered by the grid as ‘c(xl, xu,
 #'             yl, yu)’.
+#' @export kde2dw
 kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 {
     nx <- length(x)
@@ -201,6 +208,7 @@ kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 #' @param colors generation type color table
 #' @param ramp color map (defaults to rev(brewer.Greys))
 #' @param shape underlying shapefile (defaults to ISO regions)
+#' @export draw_density
 draw_density <- function(t, type, generators, generation, colors, scenario='c_RT_R30P', legend_color='white', ...)
 {
     par(mar=c(0,0,0,0),oma=c(0,0,0,0))
@@ -269,6 +277,7 @@ draw_density <- function(t, type, generators, generation, colors, scenario='c_RT
 #'           to destination.
 #' @param verts vector of vertex labels
 #' @param layout vector of vertex positions
+#' @export draw_edge_group
 draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#FFFFFF8F')
 {
     edges = unlist(lapply(strsplit(as.character(df$edge), ' '), function(l) { c(l[1], l[3]) }))
@@ -290,6 +299,7 @@ draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#F
 #'                       "time", "scenario", "Source2Sink", "value"
 #' @param dispatch regional dispatch data frame with
 #'                 "Type", "time", "zone", "value", "scenario"
+#' @export draw_interchange
 draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenario='c_RT_R30P', arrow.scaling=2.0, annontation_color='white', edge_color='white')
 {
     # igraph does not support arrows of different weight/size on the same graph
@@ -351,6 +361,7 @@ draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenari
 #' @param netinterchange net interchange data frame with
 #'                       "time", "scenario", "Source2Sink", "value"
 #' @param scenario scenario
+#' @export draw_chord_interchange
 draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', link.size=1)
 {
     col = adjustcolor(brewer.pal(12, 'Paired'), red.f=.75, green.f=.75, blue.f=.75)

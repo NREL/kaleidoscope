@@ -12,6 +12,7 @@
 #' @description Plot a single row from the generation table
 #'
 #' @param name the generator's name
+#' @export plot_line
 plot_line <- function(name, generation, ...)
 {
     lines(as.double(generation[generation$name == name,]), ...) # plot all data for give generator name
@@ -23,6 +24,7 @@ plot_line <- function(name, generation, ...)
 #' @description Plot the PV generations for all generators in an ISO
 #'
 #' @param iso the ISO's name
+#' @export plot_iso
 plot_iso <- function(iso, generators, ...)
 {
     gens = as.character(generators$Generator_Name[generators$Node_Region==iso & generators$Type=='PV']) # get PV generators for given ISO
