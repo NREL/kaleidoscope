@@ -7,26 +7,28 @@
 #
 # Load and transform time-series data
 #
-#generation = load_generation('~/ergis/data/final_report/generation_highNetLoad_R30P.csv', 'c_RT_R30P') # Not in repo
-#generation = rbind(generation, load_generation('~/ergis/data/final_report/generation_highNetLoad_N30P.csv', 'c_RT_N30P')) # Not in rep
-#generation = rbind(generation, load_generation('~/ergis/data/final_report/generation_highNetLoad_SRPS.csv', 'c_RT_SRPS')) # Not in repo
-#generation = rbind(generation, load_generation('~/ergis/data/final_report/generation_highNetLoad_loVG.csv', 'c_RT_loVG')) # Not in repo
-#load("~/ergis/data/final_report/c_RT_netinterchange.RData") # Not in repo
-#c_RT_netinterchange$time = as.POSIXlt(format(c_RT_netinterchange$time, "%Y-%m-%d %H:%M"), tz="EST")
-#load('~/ergis/data/final_report/c_RT_dispatch_stack_data.RData') # Not in repo
-#c_RT_dispatch_stack_data$time = as.POSIXlt(format(c_RT_dispatch_stack_data$time, "%Y-%m-%d %H:%M"), tz="EST")
-#
-# Load/Define static ERGIS data 
-#regions=readShapeSpatial('~/data/ergis/regions.shp', proj4string=CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'))
-#ergis_generators = generators=read.csv('~/data/ergis/gen.csv', header=TRUE, sep=',')
-#centroids = read.csv('~/data/ergis/region-centroids.csv', header=T)
-#ergis_layout = layout = as.matrix(centroids[,2:3])
-#ergis_layout = as.matrix(centroids[,2:3])
-#ergis_verts = sapply(centroids$ISO, toString)
-#scenarios = data.frame('c_RT_loVG'='lowVG', 'c_RT_SRPS'='RTx10', 'c_RT_R30P'='RTx30', 'c_RT_N30P'='ITx30')
-#ergis_colors = data.table(type=c("Hydro", "Nuclear", "Coal", "Gas CC", "Wind", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "CHP-QF", "Geothermal", "Storage", "Biomass", "CSP", "Steam", "DR", "RPV"),
+
+# ergis_path = '/Volumes/PLEXOS/Projects/ERGIS/Data for Kaleidoscope visualization/peregrine/'
+# ergis_generation = load_generation(file.path(ergis_path,'ergis/final_report/generation_highNetLoad_R30P.csv'), 'c_RT_R30P') # Not in repo
+# ergis_generation = rbind(ergis_generation, load_generation(file.path(ergis_path,'/ergis/final_report/generation_highNetLoad_N30P.csv'), 'c_RT_N30P')) # Not in rep
+# ergis_generation = rbind(ergis_generation, load_generation(file.path(ergis_path,'ergis/final_report/generation_highNetLoad_SRPS.csv'), 'c_RT_SRPS')) # Not in repo
+# ergis_generation = rbind(ergis_generation, load_generation(file.path(ergis_path,'ergis/final_report/generation_highNetLoad_loVG.csv'), 'c_RT_loVG')) # Not in repo
+# load(file.path(ergis_path,"ergis/final_report/c_RT_netinterchange.RData")) # Not in repo
+# c_RT_netinterchange$time = as.POSIXlt(format(c_RT_netinterchange$time, "%Y-%m-%d %H:%M"), tz="EST")
+# load(file.path(ergis_path,'ergis/final_report/c_RT_dispatch_stack_data.RData')) # Not in repo
+# c_RT_dispatch_stack_data$time = as.POSIXlt(format(c_RT_dispatch_stack_data$time, "%Y-%m-%d %H:%M"), tz="EST")
+# 
+# #Load/Define static ERGIS data
+# regions=maptools::readShapeSpatial(file.path(ergis_path,'ergis/regions.shp'), proj4string=sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'))
+# ergis_generators = generators=read.csv(file.path(ergis_path,'/ergis/gen.csv'), header=TRUE, sep=',')
+# centroids = read.csv(file.path(ergis_path,'/ergis/region-centroids.csv'), header=T)
+# ergis_layout = layout = as.matrix(centroids[,2:3])
+# ergis_layout = as.matrix(centroids[,2:3])
+# ergis_verts = sapply(centroids$ISO, toString)
+# scenarios = data.frame('c_RT_loVG'='lowVG', 'c_RT_SRPS'='RTx10', 'c_RT_R30P'='RTx30', 'c_RT_N30P'='ITx30')
+# ergis_colors = data.table::data.table(type=c("Hydro", "Nuclear", "Coal", "Gas CC", "Wind", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "CHP-QF", "Geothermal", "Storage", "Biomass", "CSP", "Steam", "DR", "RPV"),
 #                       color=c("#add8e6","#b22222","#333333","#6e8b3d","#4f94cd", "#ffb6c1","#8968cd", "#FFFFFF", "#ffc125", "gray20", "khaki1", "gray45", "mediumpurple2", "darkorange2", "orchid4", "gray60", "goldenrod2"))
-#ergis_iso = c("Saskatchewan", "PJM", "SPP", "NBSO", "SERC", "IESO", "ISO-NE", "Manitoba", "NYISO", "MISO", "HQ", "FRCC")
+# ergis_iso = c("Saskatchewan", "PJM", "SPP", "NBSO", "SERC", "IESO", "ISO-NE", "Manitoba", "NYISO", "MISO", "HQ", "FRCC")
 
 
 #----------------------------------------------------------------------------
@@ -43,7 +45,7 @@ draw_ergis <- function(t, scenario='c_RT_R30P', density='None',
     par(bg='black', fg='white', mar=c(0.5,0.5,1.5,1), oma=c(2,0,0,2))
     par(fig=c(0, 1080/1920, 0, 1))
     draw_density(t, density, ergis_generators, ergis_generation, ergis_colors, ...)
-    draw_generators(t, types, ergis_generators, ergis_generation, ergis_colors, scenario=scenario, scaling=scaling)
+    draw_generators(t, types, ergis_generators, ergis_generation, ergis_colors, scenario=scenario, scaling=scaling, lx=-72, ly=39.9)
     draw_interchange(t, ergis_verts, ergis_layout, c_RT_netinterchange, c_RT_dispatch_stack_data, scenario)
     draw_shadow(t)
     mtext("Generation & Flow", 1, -2, at=-92)
@@ -102,11 +104,11 @@ draw_ergis_bars <- function(t, scenario='c_RT_R30P', weight=3)
                     type=c_RT_dispatch_stack_data$Type[index],
                     value=c_RT_dispatch_stack_data$value[index])
 
-    types = data.table(type=c("Nuclear", "Coal", "Hydro", "Gas CC", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "Wind", "Curtailment"),
+    types = data.table::data.table(type=c("Nuclear", "Coal", "Hydro", "Gas CC", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "Wind", "Curtailment"),
                        color=c("#b22222","#333333","#add8e6","#6e8b3d","#ffb6c1","#8968cd","#888888","#ffc125","#4f94cd","#FF0000"))
 
 
-    s = spread(df, zone, value, fill=0)
+    s = tidyr::spread(df, zone, value, fill=0)
     m = as.matrix(s[,2:13])
     rownames(m) = s$type
 
@@ -148,7 +150,7 @@ draw_ergis_bars <- function(t, scenario='c_RT_R30P', weight=3)
 #' @param t timestep 
 draw_comparative_ergis_bars <- function(t, x0=1080/1920, x1=1, weight=3)
 {
-    types = data.table(type=c("Nuclear", "Coal", "Hydro", "Gas CC", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "Wind", "Curtailment"),
+    types = data.table::data.table(type=c("Nuclear", "Coal", "Hydro", "Gas CC", "CT/Gas boiler", "Other", "Pumped Storage", "PV", "Wind", "Curtailment"),
                        color=c("#b22222","#333333","#add8e6","#6e8b3d","#ffb6c1","#8968cd","#888888","#ffc125","#4f94cd","#FF0000"))
 
     zone = rev(c("NYISO", "ISO-NE", "FRCC", "SPP", "SERC", "PJM", "MISO", "HQ", "IESO", "NBSO", "Manitoba", "Saskatchewan"))
@@ -237,8 +239,8 @@ draw_ergis_chord = function(t, max_interchange=0, scenario='c_RT_R30P', weight=3
     par(bg='black', fg='white')
     #par(bg='white', fg='black')
     par(fig=c(0, 1080/1920, 0, 1), mar=c(0.5,0.5,1.5,1), oma=c(2,0,0,2))
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, scenario, weight)
     mtext("Net interchange", 1)
     
@@ -363,26 +365,26 @@ draw_ergis_comparative = function(t, max_interchange=0)
 
     print(format(t, "%m-%d-%Y %H:%M EST"))
     par(fig=c(0, w, 0, h), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0))    
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-r30p_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-r30p_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_R30P')    
     text(-0.90,-0.90, 'R30P', cex=1)
     
     par(fig=c(w, 2*w, 0, h), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-n30p_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-n30p_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_N30P')   
     text(-0.90,-0.90, 'N30P', cex=1)
     
     par(fig=c(0, w, h, 2*h), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-lovg_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-lovg_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_loVG')    
     text(-0.90,-0.90, 'loVG', cex=1)
     
     par(fig=c(w, 2*w, h, 2*h), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-srps_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-srps_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_SRPS')    
     text(-0.90,-0.90, 'SRPS', cex=1)
     
@@ -427,8 +429,8 @@ draw_ergis_insight <- function(t, scenario='c_RT_R30P', density='None',
     max_interchange = max(max_interchange, interchange)
     
     par(fig=c(2200/5760, 4600/5760, 0, 1), mar=c(0.5,0.5,1.5,1), oma=c(2,0,0,2), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, scenario, weight/3)
     mtext("Net interchange", 1)
 
@@ -539,8 +541,8 @@ draw_ergis_comparative_insight <- function(t,
 
     par(cex=0.65)
     par(fig=c(x0, x1, y0, y1), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-r30p_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-r30p_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_R30P',link.size=2)    
     text(-0.90,-0.90, 'RTx30', cex=1)
     
@@ -549,8 +551,8 @@ draw_ergis_comparative_insight <- function(t,
     y0 = 0
     y1 = 0.49
     par(fig=c(x0, x1, y0, y1), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-n30p_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-n30p_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_N30P',link.size=2)   
     text(-0.90,-0.90, 'ITx30', cex=1)
     
@@ -559,8 +561,8 @@ draw_ergis_comparative_insight <- function(t,
     y0 = 0.49
     y1 = 0.98
     par(fig=c(x0, x1, y0, y1), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-lovg_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-lovg_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_loVG',link.size=2)    
     text(-0.90,-0.90, 'lowVG', cex=1)
     
@@ -569,8 +571,8 @@ draw_ergis_comparative_insight <- function(t,
     y0 = 0.49
     y1 = 0.98
     par(fig=c(x0, x1, y0, y1), mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0), new=TRUE)
-    circos.clear()
-    circos.par(gap.degree=1 + (348/12) * (max_interchange-srps_interchange)/max_interchange)
+    circlize::circos.clear()
+    circlize::circos.par(gap.degree=1 + (348/12) * (max_interchange-srps_interchange)/max_interchange)
     draw_chord_interchange(t, ergis_iso, c_RT_netinterchange, 'c_RT_SRPS',link.size=2)    
     text(-0.90,-0.90, 'RTx10', cex=1)
     

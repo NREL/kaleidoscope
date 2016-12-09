@@ -90,7 +90,7 @@ draw_shadow <- function(t)
     }
     
     lines(setdiff((x-length(yy)):(x+length(yy)),0), yy[c(length(yy):1, 1:length(yy))], lwd=0.3, col='yellow')
-    polygon(setdiff((x+length(yy)):(x-length(yy)),0), yy[c(length(yy):1, 1:length(yy))], col=alpha("black",0.1), border=NA)
+    polygon(setdiff((x+length(yy)):(x-length(yy)),0), yy[c(length(yy):1, 1:length(yy))], col=scales::alpha("black",0.1), border=NA)
 }
 
 #----------------------------------------------------------------------------
@@ -122,9 +122,9 @@ draw_map <- function()
 #' @param lx x position of legend
 #' @param ly y position of legend
 #' @export draw_generators
-draw_generators <- function(t, types, generators, generation, colors, scenario='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annontation_color='white', legend_color='white')
+draw_generators <- function(t, types, generators, generation, colors, scenario='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
 {
-    p <- generation[generation$time == t & generation$scenario==scenario,]
+    p <- generation[generation$time == t & generation$scenario==scenario,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
 
     g <- generators[generators$Type %in% types,]
     g <- merge(g, p, by='Generator_Name')
@@ -181,7 +181,7 @@ kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
     gx <- seq(lims[1], lims[2], length = n) # gridpoints x
     gy <- seq(lims[3], lims[4], length = n) # gridpoints y
     if (missing(h)) 
-        h <- c(bandwidth.nrd(x), bandwidth.nrd(y));
+        h <- c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y));
     if (missing(w)) 
         w <- numeric(nx)+1;
     h <- h/4
@@ -209,14 +209,14 @@ kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 #' @param ramp color map (defaults to rev(brewer.Greys))
 #' @param shape underlying shapefile (defaults to ISO regions)
 #' @export draw_density
-draw_density <- function(t, type, generators, generation, colors, scenario='c_RT_R30P', legend_color='white', ...)
+draw_density <- function(t, density, generators, generation, colors, scenario='c_RT_R30P', legend_color='white', type='None', density_limits = 'Null', ...)
 {
     par(mar=c(0,0,0,0),oma=c(0,0,0,0))
     f = par("fig")
 
     if (type == "None") # plot the map without density heatmap
     {
-        plot(regions, col="#9F9F9F", lwd=0.5)
+        raster::plot(regions, col="#9F9F9F", lwd=0.5)
         return()
     }
     
@@ -243,7 +243,11 @@ draw_density <- function(t, type, generators, generation, colors, scenario='c_RT
     }
     else
     {
-        dlim = density_limits$lim[density_limits==type]
+        if (density_limits == 'Null') {
+          dlim = max(d$z)
+        } else {
+          dlim = density_limits$lim[density_limits==type] #?density_limits not defined
+        }
 
         if (max(d$z) > dlim)
         {
@@ -282,9 +286,9 @@ draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#F
 {
     edges = unlist(lapply(strsplit(as.character(df$edge), ' '), function(l) { c(l[1], l[3]) }))
 
-    g = make_empty_graph()
-    g = g + vertices(verts)
-    g = g + edges(edges)
+    g = igraph::make_empty_graph()
+    g = g + igraph::vertices(verts)
+    g = g + igraph::edges(edges)
     
     plot(g, layout=layout, edge.curved=0.2, rescale=F, add=T, vertex.size=250, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label=NA, edge.width=df$weight, edge.color=edge_color, edge.arrow.size=df$weight/arrow.scaling)    
 }
@@ -300,14 +304,14 @@ draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#F
 #' @param dispatch regional dispatch data frame with
 #'                 "Type", "time", "zone", "value", "scenario"
 #' @export draw_interchange
-draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenario='c_RT_R30P', arrow.scaling=2.0, annontation_color='white', edge_color='white')
+draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenario='c_RT_R30P', arrow.scaling=2.0, annotation_color='white', edge_color='white')
 {
     # igraph does not support arrows of different weight/size on the same graph
     # so we're going to go through some contortions here. 
 
     # plot the vertices
-    g = make_empty_graph()
-    g = g + vertices(verts)
+    g = igraph::make_empty_graph()
+    g = g + igraph::vertices(verts)
 
     plot(g, layout=layout, rescale=F, add=T, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label.color=annotation_color, vertex.label.cex=0.75)
 
@@ -329,27 +333,27 @@ draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenari
     c_label <- function(z,df) { ifelse(z %in% df$zone, ifelse(df$value[df$zone==z & df$type=='Curtailment'] / (sum(df$value[df$zone==z]) - df$value[df$zone==z & df$type=='Curtailment']) > 0.01, paste('\n\n(', format(100 * df$value[df$zone==z & df$type=='Curtailment'] / (sum(df$value[df$zone==z]) - df$value[df$zone==z & df$type=='Curtailment']), digits=1), '%)', sep=''), ''), '') }
     c_verts <- unlist(lapply(verts, FUN=c_label, df))
     
-    g = make_empty_graph()
-    g = g + vertices(c_verts)
+    g = igraph::make_empty_graph()
+    g = g + igraph::vertices(c_verts)
     plot(g, layout=layout, rescale=F, add=T, vertex.label.font=2, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label.color=annotation_color, vertex.label.cex=0.5)
 
     # draw legend
     x = -70.5
     alayout = as.matrix(data.frame(lon=c(x, x+.1, x, x+.1, x, x+.1), lat=c(25, 25, 26.5, 26.5, 28.5, 28.5)))
     averts = c(1,2,3,4,5,6)
-    g = make_empty_graph()
-    g = g + vertices(averts)
-    g = g + edges(c(1,2))
+    g =igraph:: make_empty_graph()
+    g = g + igraph::vertices(averts)
+    g = g + igraph::edges(c(1,2))
     plot(g, layout=alayout, rescale=F, add=T, vertex.size=1, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label=NA, edge.width=1, edge.color=edge_color, edge.width=0.5, edge.arrow.size=1.0/arrow.scaling)
 
-    g = make_empty_graph()
-    g = g + vertices(averts)
-    g = g + edges(c(3,4))
+    g = igraph::make_empty_graph()
+    g = g + igraph::vertices(averts)
+    g = g + igraph::edges(c(3,4))
     plot(g, layout=alayout, rescale=F, add=T, vertex.size=1, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label=NA, edge.width=1, edge.color=edge_color, edge.width=1.0, edge.arrow.size=2.0/arrow.scaling)
 
-    g = make_empty_graph()
-    g = g + vertices(averts)
-    g = g + edges(c(5,6))
+    g = igraph::make_empty_graph()
+    g = g + igraph::vertices(averts)
+    g = g + igraph::edges(c(5,6))
     plot(g, layout=alayout, rescale=F, add=T, vertex.size=1, vertex.color='#00000000', vertex.frame.color='#00000000', vertex.label=NA, edge.width=1, edge.color=edge_color, edge.width=2.0, edge.arrow.size=4.0/arrow.scaling)
 
 }
@@ -364,7 +368,7 @@ draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenari
 #' @export draw_chord_interchange
 draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', link.size=1)
 {
-    col = adjustcolor(brewer.pal(12, 'Paired'), red.f=.75, green.f=.75, blue.f=.75)
+    col = adjustcolor(RColorBrewer::brewer.pal(12, 'Paired'), red.f=.75, green.f=.75, blue.f=.75)
     
     index = netinterchange$time==t & netinterchange$scenario==scenario;
     interchange = data.frame(source2sink = netinterchange$Source2Sink[index], value=netinterchange$value[index])
@@ -387,9 +391,58 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
         mat[as.character(interchange$sink[i]), as.character(interchange$source[i])] = interchange$value[i]/1000
     }
     
-    chordDiagram(mat, directional=1, grid.col=col, direction.type="arrows",
+    circlize::chordDiagram(mat, directional=1, grid.col=col, direction.type="arrows",
                  link.border=1, link.lwd=0.25, link.arr.lwd=link.size,
                  link.arr.length=link.size/4, link.arr.lty=2, reduce=-1,
                  transparency=0.4)
+}
+
+
+#----------------------------------------------------------------------------
+#' Stacked bar plot of ERGIS ISO generation
+#'
+#' @description Plot a stacked bar graph of dispatch of each  ISO for
+#'              a given scenario
+#'
+#' @param t timestep
+#' @param verts vector of vertex labels
+#' @param types generation type color table
+#' @param dispatch regional dispatch data frame with
+#'                 "Type", "time", "zone", "value", "scenario"
+#' @export draw_bars
+draw_bars <- function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, xmax = 200,lpos='topright')
+{
+  index = dispatch$time==t & dispatch$scenario==scenario
+  
+  df = data.frame(zone=dispatch$zone[index],
+                  type=dispatch$Type[index],
+                  value=dispatch$value[index])
+  
+  
+  s = tidyr::spread(df, zone, value, fill=0)
+  m = as.matrix(s[,2:ncol(s)])
+  rownames(m) = s$type
+  
+  missing = types$type[!types$type %in% rownames(m)]
+  for (i in missing) 
+  {
+    m = rbind(m, 0)
+    rownames(m)[dim(m)[1]] = i
+  }
+  
+  m=m[types$type,,drop=FALSE]
+  m=m[,rev(verts[verts %in% colnames(m)])]
+  
+  
+  # plot
+  #types = rbind(types,data.frame(type = 'VG Curtailment', color = 'red', pal = 'reds'))
+  par(lwd=0.5)
+  b=barplot(m/1000, col=types$color, horiz=T, xlab='GW', xlim=c(0, xmax), col.lab=par("fg"), col.axis=par("fg"))
+  legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=1.5, cex=0.7)
+  
+  x = as.matrix(s[s$type=='Load',2:ncol(s)])
+  x=x[,rev(verts[verts %in% colnames(x)])]
+  
+  for (i in 1:length(x)) lines(rep(x[i]/1000,2), rep(b[i],2)+c(-0.5,0.5), type='l', lty=2, lwd=weight, col=par('fg'))
 }
 
