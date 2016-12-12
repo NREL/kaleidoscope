@@ -124,10 +124,11 @@ draw_map <- function()
 #' @export draw_generators
 draw_generators <- function(t, types, generators, generation, colors, scenario='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
 {
-    p <- generation[generation$time == t & generation$scenario==scenario,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
+    scenario.name = scenario
+    p <- generation[time == t & scenario == scenario.name,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
 
     g <- generators[generators$Type %in% types,]
-    g <- merge(g, p, by='Generator_Name')
+    g <- merge(p,g, by='Generator_Name')
     g <- g[!is.na(g$power),]
     g <- g[g$power > 0,]
     g <- g[order(-g$power),]
@@ -368,11 +369,11 @@ draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenari
 #' @export draw_chord_interchange
 draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', link.size=1)
 {
-    col = adjustcolor(RColorBrewer::brewer.pal(12, 'Paired'), red.f=.75, green.f=.75, blue.f=.75)
+
     
     index = netinterchange$time==t & netinterchange$scenario==scenario;
     interchange = data.frame(source2sink = netinterchange$Source2Sink[index], value=netinterchange$value[index])
-
+    
     interchange$source = unlist(lapply(strsplit(as.character(interchange$source2sink),' '), function(l) { l[1] }))
     interchange$sink = unlist(lapply(strsplit(as.character(interchange$source2sink),' '), function(l) { l[3] }))
 
@@ -391,6 +392,14 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
         mat[as.character(interchange$sink[i]), as.character(interchange$source[i])] = interchange$value[i]/1000
     }
     
+    mat = mat[rowSums(mat)!=0,colSums(mat)!=0]
+    
+    col.len = max(c(nrow(mat),ncol(mat)))
+    col.copies = ifelse(col.len>12,ceiling(col.len/12), 1)
+    
+    col = adjustcolor(rep(RColorBrewer::brewer.pal(12, 'Paired'),col.copies)[1:col.len],
+                      red.f=.75, green.f=.75, blue.f=.75)
+    
     circlize::chordDiagram(mat, directional=1, grid.col=col, direction.type="arrows",
                  link.border=1, link.lwd=0.25, link.arr.lwd=link.size,
                  link.arr.length=link.size/4, link.arr.lty=2, reduce=-1,
@@ -399,7 +408,7 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
 
 
 #----------------------------------------------------------------------------
-#' Stacked bar plot of ERGIS ISO generation
+#' Stacked bar plot of ISO generation for each scenario
 #'
 #' @description Plot a stacked bar graph of dispatch of each  ISO for
 #'              a given scenario
@@ -444,5 +453,130 @@ draw_bars <- function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts,
   x=x[,rev(verts[verts %in% colnames(x)])]
   
   for (i in 1:length(x)) lines(rep(x[i]/1000,2), rep(b[i],2)+c(-0.5,0.5), type='l', lty=2, lwd=weight, col=par('fg'))
+}
+
+
+#----------------------------------------------------------------------------
+#' Stacked bar plot of ISO generation for each region
+#'
+#' @description Plot a stacked bar graph of dispatch of each  ISO for
+#'              a given scenario
+#'
+#' @param t timestep
+#' @param verts vector of vertex labels
+#' @param types generation type color table
+#' @param dispatch regional dispatch data frame with
+#'                 "Type", "time", "zone", "value", "scenario"
+#' @export draw_comparative_bars
+draw_comparative_bars <- function(t, x0=1080/1920, x1=1, weight=3, dispatch, types, verts, xmax = 200, lpos = 'topright')
+{
+  
+  index = dispatch$time==t
+  
+  df = data.frame(zone=dispatch$zone[index],
+                  type=dispatch$Type[index],
+                  value=dispatch$value[index]/1000, #convert to GW
+                  scenario=dispatch$scenario[index])
+  
+  s = tidyr::spread(df, scenario, value, fill=0)
+  
+  zone = rev(verts[verts %in% unique(s$zone)])
+  
+  for(i in length(zone):1)
+  {
+    m=as.matrix(s[s$zone==zone[i],3:6])
+    rownames(m) = s$type[s$zone==zone[i]]
+    
+    missing = types$type[!types$type %in% rownames(m)]
+    for (j in missing) 
+    {
+      m = rbind(m, 0)
+      rownames(m)[dim(m)[1]] = j
+    }
+    
+    m=m[types$type,,drop=FALSE]
+    
+    par(mar=c(0.1,10.1,0.1,0.1), oma=c(6,8,2,2), fig=c(x0, x1, (i-1)/length(zone), i/length(zone)), lwd=0.5, new=TRUE)
+    
+    if (i==1)
+      b=barplot(m, col=types$color, horiz=T, xlab='MW', space=0, xlim=c(0,xmax), col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=0.5)
+    else
+      b=barplot(m, col=types$color, horiz=T, space=0, xlim=c(0,xmax), xaxt='n', col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=0.5)
+    
+    y = rep(b,each=2)+c(-0.5,0.5)
+    x = rep(as.matrix(s[s$type=='Load' & s$zone==zone[i],3:6]), each=2)
+    
+    lines(x, y, type='l', lty=2, lwd=1, col=par('fg'))
+    
+    mtext(zone[i], 2, line=4, las=1)
+  }
+  mtext("GW", 1, 2.5)
+  
+  par(fig=c(x0,x1,0,1), new=TRUE)
+  legend(lpos, bty='n', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=0.75, cex=0.35)
+}
+
+
+#----------------------------------------------------------------------------
+#' Comparitave maps with regional stacked bars 
+#'
+#' @description Plot a set of maps and stacked bar graph of dispatch of each  ISO for
+#'              a given set of scenarios
+#'
+#' @param t timestep
+#' @param verts vector of vertex labels
+#' @param types generation type color table
+#' @param dispatch regional dispatch data frame with
+#'                 "Type", "time", "zone", "value", "scenario"
+#' @param generation nodal generation dataframe
+#' @param colors generation-colors datafraem
+#' @param interchange regional interchange dataframe
+#' @param generators to node/zone mapping
+#' @param layout 
+#' @param scenarios list of scenarios
+#' @export draw_comparative_map
+draw_comparative_map = function(t,
+                                density='None',
+                                types=c("Hydro", "Coal", "Gas CC", "Wind", "CT/Gas boiler", "Other", "Pumped Storage", "PV"),
+                                scaling=0.002, weight=1, 
+                                map_coords = list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1)),
+                                studyname = 'ERGIS',
+                                generators,
+                                gen,
+                                colors,
+                                scenarios,
+                                verts,
+                                layout,
+                                interchange,
+                                dispatch,
+                                arrow.scaling = 2,
+                                ...)
+{
+  print(format(t, "%m-%d-%Y %H:%M %Z"))
+  par(cex=0.65, bg='black', fg='white')
+  
+  for (i in 1:length(scenarios)){
+    new = ifelse(i>1,T,F)
+    par(fig=map_coords[[i]], mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0),new = new)
+    
+    draw_density(t, density, generators, dispatch, colors)#, type = 'Wind-Wind')
+    draw_generators(t, types = types, generators, gen, colors = colors, scenario=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]))
+    draw_interchange(t, verts, layout, interchange, dispatch, scenario=scenarios[i], arrow.scaling=arrow.scaling)
+    draw_shadow(t)
+    text(x = max(layout[,1]),y = max(layout[,2]), labels = scenarios[i], cex=1.5, col = 'white')
+  }
+  
+  
+  par(cex=1)
+  par(fig=c(0, 1080/1920, 0, 1), oma=c(2,0,0,2), las=1, new=TRUE)
+  mtext("Generation & Flow", 1)
+  
+  par(fig=c(1080/1920, 1, 0, 1), mar=c(5.1,4.1,2.1,2.1), oma=c(2,0,0,2), las=1, new=TRUE)
+  draw_comparative_bars(t, weight=3,dispatch = dispatch, types = PH_colors, verts = verts,xmax = 5)
+  mtext("Regional dispatch", 1, 4)
+  
+  par(fig=c(0,1,0,1), mar=c(1.5,1.5,1.5,1.5), oma=c(2,0,0,2))
+  mtext(studyname, 3, -1.25, font=2, cex=1.5, outer=TRUE)
+  mtext(format(t, "%m-%d-2026 %H:%M %Z"), 3, -2.25, outer=TRUE)
 }
 
