@@ -394,7 +394,7 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
     
     mat = mat[rowSums(mat)!=0,colSums(mat)!=0]
     
-    col.len = max(c(nrow(mat),ncol(mat)))
+    col.len = length(unique(c(rownames(mat),colnames(mat))))
     col.copies = ifelse(col.len>12,ceiling(col.len/12), 1)
     
     col = adjustcolor(rep(RColorBrewer::brewer.pal(12, 'Paired'),col.copies)[1:col.len],
