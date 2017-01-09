@@ -112,7 +112,7 @@ draw_map = function()
 #' @description Draws individual generators as bubbles sized by generation
 #'              and colored by generation type.
 #'
-#' @param t timestep to plot
+#' @param timestep timestep to plot
 #' @param types vector of generation type strings to plot
 #' @param generators generator data frame with "Generator_Name","Node_Region","Type","lat","lon"
 #' @param generation generation time-series as transformed by load_generation
@@ -124,10 +124,9 @@ draw_map = function()
 #' @export draw_generators
 draw_generators = function(timestep, types, generators, generation, colors, scenario.name='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
 {
-    print(scenario.name)
-    print(timestep)
-  
-    p <- generation[time == timestep & scenario == scenario.name,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
+    p <- filter(generation,time == timestep)
+    p <- filter(p,scenario==scenario.name)
+    p <- p[,names(p)[names(p)!='Type']]
 
     g <- generators[generators$Type %in% types,]
     g <- merge(p,g, by='Generator_Name')
@@ -206,7 +205,6 @@ kde2dw = function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 #'
 #' @param t timestep of interest
 #' @param density
-#' @param regions
 #' @param scenario
 #' @param legend_color
 #' @param type
@@ -225,7 +223,7 @@ draw_density = function(t, density, generators, generation, colors, scenario='c_
 
     if (type == "None") # plot the map without density heatmap
     {
-        raster::plot(regions, col="#9F9F9F", lwd=0.5)
+        raster::plot(density, col="#9F9F9F", lwd=0.5)
         return()
     }
     
@@ -237,17 +235,17 @@ draw_density = function(t, density, generators, generation, colors, scenario='c_
 
     p <- sum(g$power)
 
-    d <- kde2dw(x=g$lon, y=g$lat, w=g$power, n=500, lims=as.vector(extent(regions)))
+    d <- kde2dw(x=g$lon, y=g$lat, w=g$power, n=500, lims=as.vector(extent(density)))
 
     d$z <- d$z * p
     
     if (!hasArg(ramp)) ramp = colorRampPalette(brewer.pal(8,colors$pal[colors$type==type])[1:8])(128)
     
-    r <- mask(raster(d), regions) # slow - investigate canning a raster mask
+    r <- mask(raster(d), density) # slow - investigate canning a raster mask
 
     if (minValue(r) == maxValue(r))
     {
-        plot(regions, col="#FFFFFF", lwd=0.5)#, xlim=c(-110,-10))
+        plot(density, col="#FFFFFF", lwd=0.5)#, xlim=c(-110,-10))
         values(r) = abs(rnorm(ncell(r), 0,1e-9)) # kludge: give raster some values to force the legend
     }
     else
@@ -266,7 +264,7 @@ draw_density = function(t, density, generators, generation, colors, scenario='c_
         
         plot(r, legend=F, axes=F, box=F, col=ramp, breaks=seq(0, dlim, length=128))#, xlim=c(-110,-10))
         par(fig=f) # raster.plot seems to break par("fig")
-        plot(regions, lwd=0.5, add=T)#, xlim=c(-110,-10))
+        plot(density, lwd=0.5, add=T)#, xlim=c(-110,-10))
     }
 
     plot(r, legend.only=TRUE, col=ramp, legend.width=2,
@@ -456,8 +454,9 @@ draw_bars = function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, 
   #types = rbind(types,data.frame(type = 'VG Curtailment', color = 'red', pal = 'reds'))
   par(lwd=0.5)
   b=barplot(m/1000, col=types$color, horiz=T, xlab='GW', xlim=c(0, xmax), col.lab=par("fg"), col.axis=par("fg"))
-  legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=1.5, cex=0.7)
-  
+  if(!is.null(lpos)){
+    legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=1.5, cex=0.7)
+  }
   x = as.matrix(s[s$type=='Load',2:ncol(s)])
   x=x[,rev(verts[verts %in% colnames(x)])]
   
@@ -520,7 +519,10 @@ draw_comparative_bars = function(t, x0=1080/1920, x1=1, weight=3, dispatch, type
   mtext("GW", 1, 2.5)
   
   par(fig=c(x0,x1,0,1), new=TRUE)
-  legend(lpos, bty='n', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=0.75, cex=0.35)
+  if(!is.null(lpos)){
+    legend(lpos, bty='n', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=0.75, cex=0.35)    
+  }
+
 }
 
 
@@ -566,7 +568,7 @@ draw_comparative_map = function(t,
     new = ifelse(i>1,T,F)
     par(fig=map_coords[[i]], mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0),new = new)
     
-    draw_density(t, density, generators, dispatch, colors)#, type = 'Wind-Wind')
+    draw_density(t, density, generators, dispatch, colors,scenario = scenarios[i])#, type = 'Wind-Wind')
     draw_generators(t, types = types, generators, gen, colors = colors, scenario.name=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]))
     draw_interchange(t, verts, layout, interchange, dispatch, scenario=scenarios[i], arrow.scaling=arrow.scaling)
     draw_shadow(t)
