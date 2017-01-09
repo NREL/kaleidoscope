@@ -10,7 +10,7 @@
 #'
 #' @param filename the generation csv
 #' @export load_generation
-load_generation <- function(filename, scenario)
+load_generation = function(filename, scenario)
 {
     generation = read.csv(filename, header=T)
     generation=tidyr::gather(generation, time, power, -name)
@@ -30,7 +30,7 @@ load_generation <- function(filename, scenario)
 #' @param colors data table with correlating generation type with color
 #' @param a opacity value (default=1, opaque). 
 #' @export dispatch_color
-dispatch_color <- function(type, colors, a=1)
+dispatch_color = function(type, colors, a=1)
 {
     scales::alpha(colors$color[colors$type==type], a)
 }
@@ -40,7 +40,7 @@ dispatch_color <- function(type, colors, a=1)
 #'
 #' @description Simplifies SpatialPolygonsData by removing small polygons
 #' @export stripSmallPolys
-stripSmallPolys <- function(poly, minarea=0.0)
+stripSmallPolys = function(poly, minarea=0.0)
 {
   # Get the areas
   areas <- lapply(poly@polygons, 
@@ -70,7 +70,7 @@ stripSmallPolys <- function(poly, minarea=0.0)
 #'
 #' @param t time (EST) to plot
 #' @export draw_shadow
-draw_shadow <- function(t)
+draw_shadow = function(t)
 {
     # TBD convert t from posix
     x = NightDay::NightDay(t, -5)
@@ -100,7 +100,7 @@ draw_shadow <- function(t)
 #'
 #' @param shape underlying shapefile (defaults to ISO regions)
 #' @export draw_map
-draw_map <- function()
+draw_map = function()
 {
     par(mar=c(0,0,0,0),oma=c(0,0,0,0))
     plot(regions, border='#00000080', col="#808080", lwd=0.5)
@@ -122,10 +122,12 @@ draw_map <- function()
 #' @param lx x position of legend
 #' @param ly y position of legend
 #' @export draw_generators
-draw_generators <- function(t, types, generators, generation, colors, scenario='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
+draw_generators = function(timestep, types, generators, generation, colors, scenario.name='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
 {
-    scenario.name = scenario
-    p <- generation[time == t & scenario == scenario.name,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
+    print(scenario.name)
+    print(timestep)
+  
+    p <- generation[time == timestep & scenario == scenario.name,.SD, .SDcols = names(generation)[names(generation) != 'Type']]
 
     g <- generators[generators$Type %in% types,]
     g <- merge(p,g, by='Generator_Name')
@@ -172,7 +174,7 @@ draw_generators <- function(t, types, generators, generation, colors, scenario='
 #' @param lims The limits of the rectangle covered by the grid as ‘c(xl, xu,
 #'             yl, yu)’.
 #' @export kde2dw
-kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
+kde2dw = function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 {
     nx <- length(x)
     if (length(y) != nx) 
@@ -203,6 +205,12 @@ kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 #'              a heatmap of that density.
 #'
 #' @param t timestep of interest
+#' @param density
+#' @param regions
+#' @param scenario
+#' @param legend_color
+#' @param type
+#' @param density_limits
 #' @param type generation type string (e.g., "Wind")
 #' @param generators generator data frame with "Generator_Name","Node_Region","Type","lat","lon"
 #' @param generation generation time-series as transformed by load_generation
@@ -210,7 +218,7 @@ kde2dw <- function (x, y, w, h, n = 25, lims = c(range(x), range(y)))
 #' @param ramp color map (defaults to rev(brewer.Greys))
 #' @param shape underlying shapefile (defaults to ISO regions)
 #' @export draw_density
-draw_density <- function(t, density, generators, generation, colors, scenario='c_RT_R30P', legend_color='white', type='None', density_limits = 'Null', ...)
+draw_density = function(t, density, generators, generation, colors, scenario='c_RT_R30P', legend_color='white', type='None', density_limits = 'Null', ...)
 {
     par(mar=c(0,0,0,0),oma=c(0,0,0,0))
     f = par("fig")
@@ -283,7 +291,7 @@ draw_density <- function(t, density, generators, generation, colors, scenario='c
 #' @param verts vector of vertex labels
 #' @param layout vector of vertex positions
 #' @export draw_edge_group
-draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#FFFFFF8F')
+draw_edge_group = function(df, verts, layout, arrow.scaling=2.0, edge_color='#FFFFFF8F')
 {
     edges = unlist(lapply(strsplit(as.character(df$edge), ' '), function(l) { c(l[1], l[3]) }))
 
@@ -303,9 +311,8 @@ draw_edge_group <- function(df, verts, layout, arrow.scaling=2.0, edge_color='#F
 #' @param netinterchange net interchange data frame with
 #'                       "time", "scenario", "Source2Sink", "value"
 #' @param dispatch regional dispatch data frame with
-#'                 "Type", "time", "zone", "value", "scenario"
 #' @export draw_interchange
-draw_interchange <- function(t, verts, layout, netinterchange, dispatch, scenario='c_RT_R30P', arrow.scaling=2.0, annotation_color='white', edge_color='white')
+draw_interchange = function(t, verts, layout, netinterchange, dispatch, scenario='c_RT_R30P', arrow.scaling=2.0, annotation_color='white', edge_color='white')
 {
     # igraph does not support arrows of different weight/size on the same graph
     # so we're going to go through some contortions here. 
@@ -406,7 +413,6 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
                  transparency=0.4)
 }
 
-
 #----------------------------------------------------------------------------
 #' Stacked bar plot of ISO generation for each scenario
 #'
@@ -414,12 +420,15 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
 #'              a given scenario
 #'
 #' @param t timestep
-#' @param verts vector of vertex labels
-#' @param types generation type color table
-#' @param dispatch regional dispatch data frame with
-#'                 "Type", "time", "zone", "value", "scenario"
+#' @param scenario
+#' @param weight
+#' @param dispatch
+#' @param types
+#' @param verts
+#' @param xmax maximum bar height 
+#' @param lpos legend position
 #' @export draw_bars
-draw_bars <- function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, xmax = 200,lpos='topright')
+draw_bars = function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, xmax = 200,lpos='topright')
 {
   index = dispatch$time==t & dispatch$scenario==scenario
   
@@ -455,7 +464,6 @@ draw_bars <- function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts,
   for (i in 1:length(x)) lines(rep(x[i]/1000,2), rep(b[i],2)+c(-0.5,0.5), type='l', lty=2, lwd=weight, col=par('fg'))
 }
 
-
 #----------------------------------------------------------------------------
 #' Stacked bar plot of ISO generation for each region
 #'
@@ -466,9 +474,8 @@ draw_bars <- function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts,
 #' @param verts vector of vertex labels
 #' @param types generation type color table
 #' @param dispatch regional dispatch data frame with
-#'                 "Type", "time", "zone", "value", "scenario"
 #' @export draw_comparative_bars
-draw_comparative_bars <- function(t, x0=1080/1920, x1=1, weight=3, dispatch, types, verts, xmax = 200, lpos = 'topright')
+draw_comparative_bars = function(t, x0=1080/1920, x1=1, weight=3, dispatch, types, verts, xmax = 200, lpos = 'topright')
 {
   
   index = dispatch$time==t
@@ -560,7 +567,7 @@ draw_comparative_map = function(t,
     par(fig=map_coords[[i]], mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0),new = new)
     
     draw_density(t, density, generators, dispatch, colors)#, type = 'Wind-Wind')
-    draw_generators(t, types = types, generators, gen, colors = colors, scenario=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]))
+    draw_generators(t, types = types, generators, gen, colors = colors, scenario.name=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]))
     draw_interchange(t, verts, layout, interchange, dispatch, scenario=scenarios[i], arrow.scaling=arrow.scaling)
     draw_shadow(t)
     text(x = max(layout[,1]),y = max(layout[,2]), labels = scenarios[i], cex=1.5, col = 'white')
