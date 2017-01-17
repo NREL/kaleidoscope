@@ -73,7 +73,9 @@ stripSmallPolys = function(poly, minarea=0.0)
 draw_shadow = function(t)
 {
     # TBD convert t from posix
-    x = NightDay::NightDay(t, -5)
+    tdiff = as.numeric(difftime(as.POSIXct(as.character(t),
+        origin=as.POSIXct("1970-01-01"),tz="UTC"),t,units = "hours"))
+    x = NightDay::NightDay(t, tdiff)
     
     yy <- x$Latitude
     GHA <- x$GHA
