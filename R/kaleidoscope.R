@@ -421,15 +421,30 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
 #'
 #' @param t timestep
 #' @param scenario
-#' @param weight
 #' @param dispatch
 #' @param types
 #' @param verts
-#' @param xmax maximum bar height 
-#' @param lpos legend position
+#' @param drawing.args list of drawing arguments
+#'              x0, the left edge of the barplot (1080/1920)
+#'              x1, the right edge of the barplot (1)
+#'              weight, the relative size of the bars (3)
+#'              xmax, the maximum value of the x axis (200)
+#'              lpos, the legend position string ('topright')
+#'              l.pt.cex, the relative scaling of the legend points (0.75)
+#'              l.cex, the relative scaling of the legend(0.35)
+#'
 #' @export draw_bars
-draw_bars = function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, xmax = 200,lpos='topright')
+draw_bars = function(t, scenario='c_RT_R30P', dispatch, types, verts, drawing.args = NULL)
 {
+
+  def.drawing.args = list(x0=0.5, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 1.5, l.cex = 0.7)    
+  
+  for(i in 1:length(def.drawing.args)){tempobj = def.drawing.args[[i]];eval(parse(text=paste(names(def.drawing.args)[[i]],"=tempobj")))}
+
+  if(!is.null(drawing.args)){
+    for(i in 1:length(drawing.args)){tempobj = drawing.args[[i]];eval(parse(text=paste(names(drawing.args)[[i]],"=tempobj")))}
+  }
+
   index = dispatch$time==t & dispatch$scenario==scenario
   
   df = data.frame(zone=dispatch$zone[index],
@@ -454,10 +469,10 @@ draw_bars = function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, 
   
   # plot
   #types = rbind(types,data.frame(type = 'VG Curtailment', color = 'red', pal = 'reds'))
-  par(lwd=0.5)
+  par(lwd=x0)
   b=barplot(m/1000, col=types$color, horiz=T, xlab='GW', xlim=c(0, xmax), col.lab=par("fg"), col.axis=par("fg"))
   if(!is.null(lpos)){
-    legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=1.5, cex=0.7)
+    legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=l.pt.cex, cex=l.cex)
   }
   x = as.matrix(s[s$type=='Load',2:ncol(s)])
   x=x[,rev(verts[verts %in% colnames(x)])]
@@ -475,10 +490,26 @@ draw_bars = function(t, scenario='c_RT_R30P', weight=3, dispatch, types, verts, 
 #' @param verts vector of vertex labels
 #' @param types generation type color table
 #' @param dispatch regional dispatch data frame with
+#' @param drawing.args list of drawing arguments
+#'              x0, the left edge of the barplot (1080/1920)
+#'              x1, the right edge of the barplot (1)
+#'              weight, the relative size of the bars (3)
+#'              xmax, the maximum value of the x axis (200)
+#'              lpos, the legend position string ('topright')
+#'              l.pt.cex, the relative scaling of the legend points (0.75)
+#'              l.cex, the relative scaling of the legend(0.35)
+#'                      
 #' @export draw_comparative_bars
-draw_comparative_bars = function(t, x0=1080/1920, x1=1, weight=3, dispatch, types, verts, xmax = 200, lpos = 'topright')
+draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
 {
+  def.drawing.args = list(x0=1080/1920, x1=1, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 0.75, l.cex = 0.35)    
   
+  for(i in 1:length(def.drawing.args)){tempobj = def.drawing.args[[i]];eval(parse(text=paste(names(def.drawing.args)[[i]],"=tempobj")))}
+
+  if(!is.null(drawing.args)){
+    for(i in 1:length(drawing.args)){tempobj = drawing.args[[i]];eval(parse(text=paste(names(drawing.args)[[i]],"=tempobj")))}
+  }
+
   index = dispatch$time==t
   
   df = data.frame(zone=dispatch$zone[index],
@@ -522,7 +553,7 @@ draw_comparative_bars = function(t, x0=1080/1920, x1=1, weight=3, dispatch, type
   
   par(fig=c(x0,x1,0,1), new=TRUE)
   if(!is.null(lpos)){
-    legend(lpos, bty='n', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=0.75, cex=0.35)    
+    legend(lpos, bty='n', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=l.pt.cex, cex=l.cex)    
   }
 
 }
