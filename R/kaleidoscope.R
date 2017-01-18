@@ -123,8 +123,9 @@ draw_map = function()
 #' @param fill fill the generator bubble (default=TRUE)
 #' @param lx x position of legend
 #' @param ly y position of legend
+#' @param draw_legend flag for drawing legend on map
 #' @export draw_generators
-draw_generators = function(timestep, types, generators, generation, colors, scenario.name='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white')
+draw_generators = function(timestep, types, generators, generation, colors, scenario.name='c_RT_R30P', scaling=0.002, fill=TRUE, lx=-72, ly=39.9, annotation_color='white', legend_color='white', draw_legend=FALSE)
 {
     p <- filter(generation,time == timestep)
     p <- filter(p,scenario==scenario.name)
@@ -141,18 +142,23 @@ draw_generators = function(timestep, types, generators, generation, colors, scen
         if (fill)
         {
             symbols(g$lon, g$lat, circles=sqrt(scaling*g$power/pi), inches=FALSE, bg=sapply(g$Type, dispatch_color, colors=colors, a=0.75), lwd=0.2, xaxt='n', yaxt='n', xlab='', ylab='', add=TRUE, fg=annotation_color)
-            
-            legend(lx, ly, legend=colors$type, col=legend_color, text.col=ifelse(colors$type %in% types, par("fg"), '#777777'), lwd=0.25, pt.bg=colors$color, pch=21, pt.cex=1, bty='n', cex=0.5)
+            if(draw_legend){
+                legend(lx, ly, legend=colors$type, col=legend_color, text.col=ifelse(colors$type %in% types, par("fg"), '#777777'), lwd=0.25, pt.bg=colors$color, pch=21, pt.cex=1, bty='n', cex=0.5)
+            }
         }
         else
         {
             symbols(g$lon, g$lat, circles=sqrt(scaling*g$power/pi), inches=FALSE, lwd=0.5, xaxt='n', yaxt='n', xlab='', ylab='', add=TRUE, fg=sapply(g$Type, dispatch_color, a=0.9))
-            legend(lx, ly, legend=types, bg='#737373', col=sapply(types, dispatch_color, colors=colors, a=0.9), pch=21, text.col=par("fg"))
+            if(draw_legend){
+                legend(lx, ly, legend=types, bg='#737373', col=sapply(types, dispatch_color, colors=colors, a=0.9), pch=21, text.col=par("fg"))
+            }
         }
 
-        gen_legend = data.frame(power=c(1000, 2000, 4000), lat=c(25, 26.5, 28.5), lon=c(lx+1.5, lx+1.5, lx+1.5))
-        symbols(gen_legend$lon, gen_legend$lat, circles=sqrt(0.002*gen_legend$power/pi), inches=FALSE, bg='#656565', fg='white', lwd=0.4, xaxt='n', yaxt='n', xlab='', ylab='', add=TRUE)
-        text(gen_legend$lon, gen_legend$lat-0.1, col=par("fg"), labels=c("1.0 GW", "2.0 GW", "4.0 GW"), cex=0.5, pos=4, offset=c(0.95))
+        if (draw_legend){
+            gen_legend = data.frame(power=c(1000, 2000, 4000), lat=c(25, 26.5, 28.5), lon=c(lx+1.5, lx+1.5, lx+1.5))
+            symbols(gen_legend$lon, gen_legend$lat, circles=sqrt(0.002*gen_legend$power/pi), inches=FALSE, bg='#656565', fg='white', lwd=0.4, xaxt='n', yaxt='n', xlab='', ylab='', add=TRUE)
+            text(gen_legend$lon, gen_legend$lat-0.1, col=par("fg"), labels=c("1.0 GW", "2.0 GW", "4.0 GW"), cex=0.5, pos=4, offset=c(0.95))
+        }
     }
 }
 
@@ -576,12 +582,15 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
 #' @param generators to node/zone mapping
 #' @param layout 
 #' @param scenarios list of scenarios
+#' @param m.drawing.args list of map drawing args 
+#'              scaling, the size of the generator dots (0.002)
+#'              map_coords, list of coordinates for each map image (list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1))))
+#'              arrow.scaling, the relative scaling of the flow arrows (2)
+#' @param b.drawing.args list of barplot drawing args (see draw_comparative_bars)
 #' @export draw_comparative_map
 draw_comparative_map = function(t,
                                 density='None',
                                 types=c("Hydro", "Coal", "Gas CC", "Wind", "CT/Gas boiler", "Other", "Pumped Storage", "PV"),
-                                scaling=0.002, weight=1, 
-                                map_coords = list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1)),
                                 studyname = 'ERGIS',
                                 generators,
                                 gen,
@@ -591,9 +600,21 @@ draw_comparative_map = function(t,
                                 layout,
                                 interchange,
                                 dispatch,
-                                arrow.scaling = 2,
+                                m.drawing.args = NULL,
+                                b.drawing.args = NULL,
                                 ...)
 {
+  def.m.drawing.args = list(scaling=0.002, 
+    map_coords = list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1)),
+    arrow.scaling = 2,
+    draw_legend = F)    
+  
+  for(i in 1:length(def.m.drawing.args)){tempobj = def.m.drawing.args[[i]];eval(parse(text=paste(names(def.m.drawing.args)[[i]],"=tempobj")))}
+
+  if(!is.null(m.drawing.args)){
+    for(i in 1:length(m.drawing.args)){tempobj = m.drawing.args[[i]];eval(parse(text=paste(names(m.drawing.args)[[i]],"=tempobj")))}
+  }
+
   print(format(t, "%m-%d-%Y %H:%M %Z"))
   par(cex=0.65, bg='black', fg='white')
   
@@ -602,7 +623,7 @@ draw_comparative_map = function(t,
     par(fig=map_coords[[i]], mar=c(0.5,0.5,0.5,0.5),oma=c(2,2,2,0),new = new)
     
     draw_density(t, density, generators, dispatch, colors,scenario = scenarios[i])#, type = 'Wind-Wind')
-    draw_generators(t, types = types, generators, gen, colors = colors, scenario.name=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]))
+    draw_generators(t, types = types, generators, gen, colors = colors, scenario.name=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]),draw_legend = draw_legend)
     draw_interchange(t, verts, layout, interchange, dispatch, scenario=scenarios[i], arrow.scaling=arrow.scaling)
     draw_shadow(t)
     text(x = max(layout[,1]),y = max(layout[,2]), labels = scenarios[i], cex=1.5, col = 'white')
@@ -614,7 +635,8 @@ draw_comparative_map = function(t,
   mtext("Generation & Flow", 1)
   
   par(fig=c(1080/1920, 1, 0, 1), mar=c(5.1,4.1,2.1,2.1), oma=c(2,0,0,2), las=1, new=TRUE)
-  draw_comparative_bars(t, weight=3,dispatch = dispatch, types = PH_colors, verts = verts,xmax = 5)
+  if(is.null(b.drawing.args)){b.drawing.args = list(xmax = 5, weight=3)}
+  draw_comparative_bars(t, dispatch = dispatch, types = PH_colors, verts = verts,drawing.args = b.drawing.args)
   mtext("Regional dispatch", 1, 4)
   
   par(fig=c(0,1,0,1), mar=c(1.5,1.5,1.5,1.5), oma=c(2,0,0,2))
