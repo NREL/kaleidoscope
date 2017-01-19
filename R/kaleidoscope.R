@@ -529,7 +529,7 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
   
   for(i in length(zone):1)
   {
-    m=as.matrix(s[s$zone==zone[i],3:6])
+    m=as.matrix(s[s$zone==zone[i],3:ncol(s)])
     rownames(m) = s$type[s$zone==zone[i]]
     
     missing = types$type[!types$type %in% rownames(m)]
@@ -549,7 +549,7 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
       b=barplot(m, col=types$color, horiz=T, space=0, xlim=c(0,xmax), xaxt='n', col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=0.5)
     
     y = rep(b,each=2)+c(-0.5,0.5)
-    x = rep(as.matrix(s[s$type=='Load' & s$zone==zone[i],3:6]), each=2)
+    x = rep(as.matrix(s[s$type=='Load' & s$zone==zone[i],3:ncol(s)]), each=2)
     
     lines(x, y, type='l', lty=2, lwd=1, col=par('fg'))
     
@@ -607,7 +607,8 @@ draw_comparative_map = function(t,
   def.m.drawing.args = list(scaling=0.002, 
     map_coords = list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1)),
     arrow.scaling = 2,
-    draw_legend = F)    
+    draw_legend = F,
+    fig_sep = 1080/1920)    
   
   for(i in 1:length(def.m.drawing.args)){tempobj = def.m.drawing.args[[i]];eval(parse(text=paste(names(def.m.drawing.args)[[i]],"=tempobj")))}
 
@@ -631,10 +632,10 @@ draw_comparative_map = function(t,
   
   
   par(cex=1)
-  par(fig=c(0, 1080/1920, 0, 1), oma=c(2,0,0,2), las=1, new=TRUE)
+  par(fig=c(0, fig_sep, 0, 1), oma=c(2,0,0,2), las=1, new=TRUE)
   mtext("Generation & Flow", 1)
   
-  par(fig=c(1080/1920, 1, 0, 1), mar=c(5.1,4.1,2.1,2.1), oma=c(2,0,0,2), las=1, new=TRUE)
+  par(fig=c(fig_sep, 1, 0, 1), mar=c(5.1,4.1,2.1,2.1), oma=c(2,0,0,2), las=1, new=TRUE)
   if(is.null(b.drawing.args)){b.drawing.args = list(xmax = 5, weight=3)}
   draw_comparative_bars(t, dispatch = dispatch, types = PH_colors, verts = verts,drawing.args = b.drawing.args)
   mtext("Regional dispatch", 1, 4)
