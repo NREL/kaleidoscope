@@ -523,7 +523,7 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
                   value=dispatch$value[index]/1000, #convert to GW
                   scenario=dispatch$scenario[index])
   
-  s = tidyr::spread(df, scenario, value, fill=0)
+  s = tidyr::spread(df, scenario, value, fill=0)[,c('zone','type',as.character(unique(df$scenario)))]
   
   zone = rev(verts[verts %in% unique(s$zone)])
   
