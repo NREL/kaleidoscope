@@ -443,7 +443,7 @@ draw_chord_interchange = function(t, iso, netinterchange, scenario='c_RT_R30P', 
 draw_bars = function(t, scenario='c_RT_R30P', dispatch, types, verts, drawing.args = NULL)
 {
 
-  def.drawing.args = list(x0=0.5, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 1.5, l.cex = 0.7)    
+  def.drawing.args = list(x0=0.5, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 1.5, l.cex = 0.7,b.draw_load = T)    
   
   for(i in 1:length(def.drawing.args)){tempobj = def.drawing.args[[i]];eval(parse(text=paste(names(def.drawing.args)[[i]],"=tempobj")))}
 
@@ -478,7 +478,12 @@ draw_bars = function(t, scenario='c_RT_R30P', dispatch, types, verts, drawing.ar
   par(lwd=x0)
   b=barplot(m/1000, col=types$color, horiz=T, xlab='GW', xlim=c(0, xmax), col.lab=par("fg"), col.axis=par("fg"))
   if(!is.null(lpos)){
-    legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=l.pt.cex, cex=l.cex)
+    if(b.draw_load){
+        legend(lpos, bty='o', legend=c(types$type,'Load'), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type)),45), pt.cex=l.pt.cex, cex=l.cex)    
+    }else{
+        legend(lpos, bty='o', legend=c(types$type), col=par("fg"), pt.bg=c(types$color,par('fg')), pch=c(rep(22, length(types$type))), pt.cex=l.pt.cex, cex=l.cex)
+    }
+    
   }
   x = as.matrix(s[s$type=='Load',2:ncol(s)])
   x=x[,rev(verts[verts %in% colnames(x)])]
@@ -506,9 +511,9 @@ draw_bars = function(t, scenario='c_RT_R30P', dispatch, types, verts, drawing.ar
 #'              l.cex, the relative scaling of the legend(0.35)
 #'                      
 #' @export draw_comparative_bars
-draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
+draw_comparative_bars = function(t, dispatch, types, verts, scenarios = unique(dispatch$scenario), drawing.args = NULL)
 {
-  def.drawing.args = list(x0=1080/1920, x1=1, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 0.75, l.cex = 0.35)    
+  def.drawing.args = list(x0=1080/1920, x1=1, weight=3, xmax = 200, lpos = 'topright', l.pt.cex = 0.75, l.cex = 0.35, b.cex.names = 0.5, b.cex.znames = 1)    
   
   for(i in 1:length(def.drawing.args)){tempobj = def.drawing.args[[i]];eval(parse(text=paste(names(def.drawing.args)[[i]],"=tempobj")))}
 
@@ -516,14 +521,14 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
     for(i in 1:length(drawing.args)){tempobj = drawing.args[[i]];eval(parse(text=paste(names(drawing.args)[[i]],"=tempobj")))}
   }
 
-  index = dispatch$time==t
+  index = dispatch$time==t & dispatch$scenario %in% scenarios
   
   df = data.frame(zone=dispatch$zone[index],
                   type=dispatch$Type[index],
                   value=dispatch$value[index]/1000, #convert to GW
                   scenario=dispatch$scenario[index])
   
-  s = tidyr::spread(df, scenario, value, fill=0)[,c('zone','type',as.character(unique(df$scenario)))]
+  s = tidyr::spread(df, scenario, value, fill=0)[,c('zone','type',scenarios)]
   
   zone = rev(verts[verts %in% unique(s$zone)])
   
@@ -544,16 +549,16 @@ draw_comparative_bars = function(t, dispatch, types, verts, drawing.args = NULL)
     par(mar=c(0.1,10.1,0.1,0.1), oma=c(6,8,2,2), fig=c(x0, x1, (i-1)/length(zone), i/length(zone)), lwd=0.5, new=TRUE)
     
     if (i==1)
-      b=barplot(m, col=types$color, horiz=T, xlab='MW', space=0, xlim=c(0,xmax), col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=0.5)
+      b=barplot(m, col=types$color, horiz=T, xlab='MW', space=0, xlim=c(0,xmax), col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=b.cex.names)
     else
-      b=barplot(m, col=types$color, horiz=T, space=0, xlim=c(0,xmax), xaxt='n', col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=0.5)
+      b=barplot(m, col=types$color, horiz=T, space=0, xlim=c(0,xmax), xaxt='n', col.lab=par("fg"), col.axis=par("fg"), las=1, cex.names=b.cex.names)
     
     y = rep(b,each=2)+c(-0.5,0.5)
     x = rep(as.matrix(s[s$type=='Load' & s$zone==zone[i],3:ncol(s)]), each=2)
     
     lines(x, y, type='l', lty=2, lwd=1, col=par('fg'))
     
-    mtext(zone[i], 2, line=4, las=1)
+    mtext(zone[i], 2, line=4, las=1, cex = b.cex.znames)
   }
   mtext("GW", 1, 2.5)
   
@@ -607,6 +612,7 @@ draw_comparative_map = function(t,
   def.m.drawing.args = list(scaling=0.002, 
     map_coords = list(c(0, 540/1920, 0, 0.5),c(540/1920, 1080/1920, 0, 0.5),c(0, 540/1920, 0.5, 1),c(540/1920, 1080/1920, 0.5, 1)),
     arrow.scaling = 2,
+    m.cex = 1.5,
     draw_legend = F,
     fig_sep = 1080/1920)    
   
@@ -627,7 +633,7 @@ draw_comparative_map = function(t,
     draw_generators(t, types = types, generators, gen, colors = colors, scenario.name=scenarios[i], scaling=scaling, lx = as.numeric(quantile(layout[,1])[1]-1),ly = as.numeric(quantile(layout[,2])[2]),draw_legend = draw_legend)
     draw_interchange(t, verts, layout, interchange, dispatch, scenario=scenarios[i], arrow.scaling=arrow.scaling)
     draw_shadow(t)
-    text(x = max(layout[,1]),y = max(layout[,2]), labels = scenarios[i], cex=1.5, col = 'white')
+    text(x = max(layout[,1]),y = max(layout[,2]), labels = scenarios[i], cex=m.cex, col = 'white')
   }
   
   
@@ -637,11 +643,12 @@ draw_comparative_map = function(t,
   
   par(fig=c(fig_sep, 1, 0, 1), mar=c(5.1,4.1,2.1,2.1), oma=c(2,0,0,2), las=1, new=TRUE)
   if(is.null(b.drawing.args)){b.drawing.args = list(xmax = 5, weight=3)}
-  draw_comparative_bars(t, dispatch = dispatch, types = PH_colors, verts = verts,drawing.args = b.drawing.args)
+  draw_comparative_bars(t,   dispatch = dispatch, types = PH_colors, verts = verts,
+    scenarios = scenarios, drawing.args = b.drawing.args)
   mtext("Regional dispatch", 1, 4)
   
   par(fig=c(0,1,0,1), mar=c(1.5,1.5,1.5,1.5), oma=c(2,0,0,2))
   mtext(studyname, 3, -1.25, font=2, cex=1.5, outer=TRUE)
-  mtext(format(t, "%m-%d-2026 %H:%M %Z"), 3, -2.25, outer=TRUE)
+  mtext(format(t, "%m-%d-%Y %H:%M %Z"), 3, -2.25, outer=TRUE)
 }
 
